@@ -299,166 +299,143 @@ export default function InteractiveAvatar() {
   };
 
   return (
-    <div className="w-full flex flex-col gap-4">
-      <div className="w-full mb-4">
-        <Chip 
-          color={salesContext.currentPhase === 'briefing' ? 'primary' : 'default'}
-          className="mr-2"
-        >
-          Briefing
-        </Chip>
-        <Chip 
-          color={salesContext.currentPhase === 'meeting' ? 'primary' : 'default'}
-          className="mr-2"
-        >
-          Meeting
-        </Chip>
-        <Chip 
-          color={salesContext.currentPhase === 'summary' ? 'primary' : 'default'}
-        >
-          Summary
-        </Chip>
-      </div>
-      <Card>
-        <CardBody className="h-[500px] flex flex-col justify-center items-center">
-          {stream ? (
-            <div className="h-[500px] w-[900px] justify-center items-center flex rounded-lg overflow-hidden">
+    <div className="w-full min-h-screen bg-[#000000] text-white">
+      {/* Phase indicator */}
+      <div className="max-w-7xl mx-auto py-8">
+        <div className="flex justify-center gap-4 mb-12">
+          {['Briefing', 'Meeting', 'Summary'].map((phase) => (
+            <button
+              key={phase}
+              onClick={() => handlePhaseChange(phase.toLowerCase() as any)}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all
+                ${salesContext.currentPhase === phase.toLowerCase() 
+                  ? 'bg-white text-black' 
+                  : 'bg-[#1d1d1f] text-white hover:bg-[#2d2d2f]'}`}
+            >
+              {phase}
+            </button>
+          ))}
+        </div>
+
+        {/* Main content */}
+        <div className="rounded-2xl overflow-hidden bg-[#1d1d1f] mb-8">
+          <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+            {stream ? (
               <video
                 ref={mediaStream}
                 autoPlay
                 playsInline
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                }}
+                className="absolute top-0 left-0 w-full h-full object-contain bg-[#00ff00]"
               >
                 <track kind="captions" />
               </video>
-              <div className="flex flex-col gap-2 absolute bottom-3 right-3">
-                <div className="flex flex-col gap-2 mb-4">
-                  <Button
-                    className="bg-gradient-to-tr from-blue-500 to-blue-300 text-white rounded-lg"
-                    size="sm"
-                    variant="shadow"
-                    isDisabled={salesContext.currentPhase === 'briefing'}
-                    onClick={() => handlePhaseChange('briefing')}
-                  >
-                    Switch to Briefing
-                  </Button>
-                  <Button
-                    className="bg-gradient-to-tr from-green-500 to-green-300 text-white rounded-lg"
-                    size="sm"
-                    variant="shadow"
-                    isDisabled={salesContext.currentPhase === 'meeting'}
-                    onClick={() => handlePhaseChange('meeting')}
-                  >
-                    Switch to Meeting
-                  </Button>
-                  <Button
-                    className="bg-gradient-to-tr from-purple-500 to-purple-300 text-white rounded-lg"
-                    size="sm"
-                    variant="shadow"
-                    isDisabled={salesContext.currentPhase === 'summary'}
-                    onClick={() => handlePhaseChange('summary')}
-                  >
-                    Switch to Summary
-                  </Button>
-                </div>
-                <Button
-                  className="bg-gradient-to-tr from-indigo-500 to-indigo-300 text-white rounded-lg"
-                  size="md"
-                  variant="shadow"
-                  onClick={handleInterrupt}
-                >
-                  Interrupt task
-                </Button>
-                <Button
-                  className="bg-gradient-to-tr from-red-500 to-red-300 text-white rounded-lg"
-                  size="md"
-                  variant="shadow"
-                  onClick={endSession}
-                >
-                  End session
-                </Button>
-              </div>
-            </div>
-          ) : !isLoadingSession ? (
-            <div className="h-full justify-center items-center flex flex-col gap-8 w-[500px] self-center">
-              <div className="flex flex-col gap-4 w-full">
-                <div>
-                  <p className="text-sm font-medium leading-none mb-2">
-                    Prospect Email
-                  </p>
-                  <Input
+            ) : !isLoadingSession ? (
+              <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center p-8">
+                <div className="max-w-md w-full">
+                  <input
+                    type="email"
                     placeholder="Enter prospect email"
                     value={prospectEmail}
                     onChange={(e) => setProspectEmail(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    type="email"
+                    className="w-full px-4 py-3 rounded-lg bg-[#2d2d2f] text-white border-none mb-4"
                   />
+                  <button
+                    onClick={startSession}
+                    disabled={!prospectEmail}
+                    className="w-full bg-[#0071e3] text-white rounded-lg px-4 py-3 font-medium
+                      hover:bg-[#0077ed] transition-colors disabled:opacity-50"
+                  >
+                    Start Session
+                  </button>
                 </div>
-                <Button
-                  className="bg-gradient-to-tr from-indigo-500 to-indigo-300 w-full text-white"
-                  size="md"
-                  variant="shadow"
-                  onClick={startSession}
-                  isDisabled={!prospectEmail}
-                >
-                  Start session
-                </Button>
               </div>
+            ) : (
+              <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                <Spinner color="white" size="lg" />
+              </div>
+            )}
+
+            {/* Control buttons */}
+            {stream && (
+              <div className="absolute bottom-6 right-6 flex flex-col gap-3">
+                <button
+                  onClick={handleInterrupt}
+                  className="px-6 py-2 rounded-full bg-white/10 backdrop-blur-md
+                    hover:bg-white/20 transition-colors text-sm font-medium"
+                >
+                  Interrupt
+                </button>
+                <button
+                  onClick={endSession}
+                  className="px-6 py-2 rounded-full bg-red-500/80 backdrop-blur-md
+                    hover:bg-red-500 transition-colors text-sm font-medium"
+                >
+                  End Session
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Chat interface */}
+          <div className="p-6 border-t border-[#2d2d2f]">
+            <div className="flex gap-4 mb-4">
+              {['Text Mode', 'Voice Mode'].map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => handleChangeChatMode(mode.toLowerCase().replace(' ', '_'))}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                    ${chatMode === mode.toLowerCase().replace(' ', '_')
+                      ? 'bg-white text-black'
+                      : 'bg-[#2d2d2f] text-white hover:bg-[#3d3d3f]'}`}
+                >
+                  {mode}
+                </button>
+              ))}
             </div>
-          ) : (
-            <Spinner color="default" size="lg" />
-          )}
-        </CardBody>
-        <Divider />
-        <CardFooter className="flex flex-col gap-3 relative">
-          <Tabs
-            aria-label="Options"
-            selectedKey={chatMode}
-            onSelectionChange={(v) => {
-              handleChangeChatMode(v);
-            }}
-          >
-            <Tab key="text_mode" title="Text mode" />
-            <Tab key="voice_mode" title="Voice mode" />
-          </Tabs>
-          {chatMode === "text_mode" ? (
-            <div className="w-full flex relative">
-              <InteractiveAvatarTextInput
-                disabled={!stream}
-                input={text}
-                label="Chat"
-                loading={isLoadingRepeat}
-                placeholder="Type something for the avatar to respond"
-                setInput={setText}
-                onSubmit={handleSpeak}
-              />
-              {text && (
-                <Chip className="absolute right-16 top-3">Listening</Chip>
-              )}
-            </div>
-          ) : (
-            <div className="w-full text-center">
-              <Button
-                isDisabled={!isUserTalking}
-                className="bg-gradient-to-tr from-indigo-500 to-indigo-300 text-white"
-                size="md"
-                variant="shadow"
-              >
-                {isUserTalking ? "Listening" : "Voice chat"}
-              </Button>
-            </div>
-          )}
-        </CardFooter>
-      </Card>
-      <p className="font-mono text-right">
-        <span className="font-bold">Console:</span>
-        <br />
-        {debug}
-      </p>
+
+            {chatMode === "text_mode" ? (
+              <div className="relative">
+                <input
+                  type="text"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Type something for the avatar to respond"
+                  className="w-full px-4 py-3 rounded-lg bg-[#2d2d2f] text-white border-none"
+                />
+                {text && (
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 
+                    text-xs font-medium text-white/60">
+                    Listening...
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="text-center">
+                <button
+                  disabled={!isUserTalking}
+                  className={`px-6 py-2 rounded-full ${
+                    isUserTalking
+                      ? 'bg-[#0071e3] text-white'
+                      : 'bg-[#2d2d2f] text-white/60'
+                  }`}
+                >
+                  {isUserTalking ? "Listening..." : "Voice Chat"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Debug console */}
+        {debug && (
+          <div className="text-xs font-mono text-white/60 text-right">
+            <span className="font-bold">Console:</span>
+            <br />
+            {debug}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -17,7 +17,7 @@ const caseStudies = [
   {
     id: '2', 
     companyName: 'Enterprise Systems Inc',
-    industry: 'INFORMATION_TECHNOLOGY_AND_SERVICES',
+    industry: 'Information Technology and Services',
     challenge: 'Struggled with scaling personalized demos and product presentations',
     solution: 'Implemented AI avatars for product demonstrations and customer onboarding',
     results: [
@@ -59,9 +59,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const industry = searchParams.get('industry');
   
-  const filteredCases = industry 
-    ? caseStudies.filter(cs => cs.industry.toLowerCase() === industry.toLowerCase())
-    : caseStudies;
+  const filteredCases = industry?.toLowerCase().includes('information')
+    ? caseStudies.filter(cs => cs.industry === 'Information Technology and Services')
+    : industry 
+      ? caseStudies.filter(cs => cs.industry.toLowerCase() === industry.toLowerCase())
+      : caseStudies;
   
   if (filteredCases.length === 0) {
     return NextResponse.json([caseStudies[0]]);

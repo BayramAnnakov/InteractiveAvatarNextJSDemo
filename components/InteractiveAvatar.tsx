@@ -26,6 +26,19 @@ import InteractiveAvatarTextInput from "./InteractiveAvatarTextInput";
 import {AVATARS, STT_LANGUAGE_LIST} from "@/app/lib/constants";
 import { ProspectInfo, MeetingSummary, SalesContext } from "@/app/types/sales";
 
+type MeetingPhase = 'briefing' | 'meeting' | 'case-study' | 'summary';
+
+interface CaseStudy {
+  id: string;
+  companyName: string;
+  industry: string;
+  challenge: string;
+  solution: string;
+  results: string[];
+  testimonial?: string;
+  logoUrl?: string;
+}
+
 export default function InteractiveAvatar() {
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isLoadingRepeat, setIsLoadingRepeat] = useState(false);
@@ -45,6 +58,8 @@ export default function InteractiveAvatar() {
   });
   const [prospectInfo, setProspectInfo] = useState<ProspectInfo>();
   const [meetingSummary, setMeetingSummary] = useState<MeetingSummary>();
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
+  const [selectedCaseStudy, setSelectedCaseStudy] = useState<CaseStudy>();
 
   async function fetchAccessToken() {
     try {
@@ -236,7 +251,19 @@ export default function InteractiveAvatar() {
     }
   }
 
-  async function handlePhaseChange(newPhase: 'briefing' | 'meeting' | 'summary') {
+  async function fetchRelevantCaseStudies() {
+    try {
+      const response = await fetch(`/api/case-studies?industry=${encodeURIComponent(prospectInfo?.companyDetails.industry || '')}`);
+      const data = await response.json();
+      setCaseStudies(data);
+      return data[0]; // Get most relevant case study
+    } catch (error) {
+      console.error("Error fetching case studies:", error);
+      setDebug("Error fetching case studies: " + (error as Error).message);
+    }
+  }
+
+  async function handlePhaseChange(newPhase: MeetingPhase) {
     if (!avatar.current) return;
 
     setSalesContext(prev => ({ ...prev, currentPhase: newPhase }));
@@ -253,6 +280,29 @@ export default function InteractiveAvatar() {
       
       case 'meeting':
         message = "You mentioned one of our competitors - Hooli - earlier. Could you tell me more about your experience with them and what specific aspects made you consider alternatives?";
+        break;
+      
+      case 'case-study':
+        try {
+          const relevantCase = await fetchRelevantCaseStudies();
+          if (!relevantCase) {
+            message = "I apologize, but I couldn't find a directly relevant case study at the moment. However, I'd be happy to discuss how our solution could address your specific needs.";
+            setSelectedCaseStudy(undefined);
+          } else {
+            setSelectedCaseStudy(relevantCase);
+            message = `Let me share a relevant success story from ${relevantCase.companyName}. 
+              They faced similar challenges in the ${relevantCase.industry} industry. 
+              ${relevantCase.challenge} 
+              We implemented ${relevantCase.solution} 
+              This resulted in ${relevantCase.results.join(', ')}. 
+              ${relevantCase.testimonial ? `Their team shared that "${relevantCase.testimonial}"` : ''}
+              How does this align with your current situation?`;
+          }
+        } catch (error) {
+          console.error("Error in case study phase:", error);
+          message = "I apologize, but I'm having trouble accessing our case studies at the moment. Would you like to discuss how our solution could help your specific situation instead?";
+          setSelectedCaseStudy(undefined);
+        }
         break;
       
       case 'summary':
@@ -283,7 +333,7 @@ export default function InteractiveAvatar() {
         break;
     }
 
-    if (message) {
+    if (message && avatar.current) {
       await avatar.current.speak({ 
         text: message, 
         taskType: TaskType.REPEAT, 
@@ -303,12 +353,12 @@ export default function InteractiveAvatar() {
       {/* Phase indicator */}
       <div className="max-w-7xl mx-auto py-8">
         <div className="flex justify-center gap-4 mb-12">
-          {['Briefing', 'Meeting', 'Summary'].map((phase) => (
+          {['Briefing', 'Meeting', 'Case Study', 'Summary'].map((phase) => (
             <button
               key={phase}
-              onClick={() => handlePhaseChange(phase.toLowerCase() as any)}
+              onClick={() => handlePhaseChange(phase.toLowerCase().replace(' ', '-') as MeetingPhase)}
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all
-                ${salesContext.currentPhase === phase.toLowerCase() 
+                ${salesContext.currentPhase === phase.toLowerCase().replace(' ', '-')
                   ? 'bg-white text-black' 
                   : 'bg-[#1d1d1f] text-white hover:bg-[#2d2d2f]'}`}
             >
@@ -316,6 +366,54 @@ export default function InteractiveAvatar() {
             </button>
           ))}
         </div>
+
+        {/* Add case study overlay */}
+        {salesContext.currentPhase === 'case-study' && selectedCaseStudy && (
+          <div className="absolute top-24 right-8 z-10 w-96">
+            <div className="bg-[#1d1d1f]/90 backdrop-blur-xl rounded-2xl p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-semibold">{selectedCaseStudy.companyName}</h3>
+                  <span className="text-sm text-white/60">{selectedCaseStudy.industry}</span>
+                </div>
+                {selectedCaseStudy.logoUrl && (
+                  <img 
+                    src={selectedCaseStudy.logoUrl} 
+                    alt={`${selectedCaseStudy.companyName} logo`}
+                    className="h-12 w-12 object-contain"
+                  />
+                )}
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-white/80 mb-1">Challenge</h4>
+                  <p className="text-sm">{selectedCaseStudy.challenge}</p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-white/80 mb-1">Solution</h4>
+                  <p className="text-sm">{selectedCaseStudy.solution}</p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-white/80 mb-1">Results</h4>
+                  <ul className="list-disc list-inside text-sm space-y-1">
+                    {selectedCaseStudy.results.map((result, index) => (
+                      <li key={index} className="text-white/80">{result}</li>
+                    ))}
+                  </ul>
+                </div>
+                
+                {selectedCaseStudy.testimonial && (
+                  <div className="border-l-2 border-[#0071e3] pl-4 mt-6">
+                    <p className="text-sm italic text-white/90">"{selectedCaseStudy.testimonial}"</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main content */}
         <div className="rounded-2xl overflow-hidden bg-[#1d1d1f] mb-8">
@@ -325,7 +423,7 @@ export default function InteractiveAvatar() {
                 ref={mediaStream}
                 autoPlay
                 playsInline
-                className="absolute top-0 left-0 w-full h-full object-contain bg-[#00ff00]"
+                className="absolute top-0 left-0 w-full h-full object-contain bg-[#1d1d1f]"
               >
                 <track kind="captions" />
               </video>
@@ -361,15 +459,18 @@ export default function InteractiveAvatar() {
               <div className="absolute bottom-6 right-6 flex flex-col gap-3">
                 <button
                   onClick={handleInterrupt}
-                  className="px-6 py-2 rounded-full bg-white/10 backdrop-blur-md
-                    hover:bg-white/20 transition-colors text-sm font-medium"
+                  className="px-6 py-2.5 rounded-full bg-white/10 backdrop-blur-xl
+                    border border-white/20 text-white
+                    hover:bg-white/20 transition-all duration-200 text-sm font-medium
+                    shadow-lg"
                 >
                   Interrupt
                 </button>
                 <button
                   onClick={endSession}
-                  className="px-6 py-2 rounded-full bg-red-500/80 backdrop-blur-md
-                    hover:bg-red-500 transition-colors text-sm font-medium"
+                  className="px-6 py-2.5 rounded-full bg-[#ff453a] backdrop-blur-xl
+                    text-white hover:bg-[#ff564f] transition-all duration-200
+                    text-sm font-medium shadow-lg"
                 >
                   End Session
                 </button>

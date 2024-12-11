@@ -31,6 +31,24 @@ function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
 }
 
+function formatRevenue(revenue: string): string {
+  // Remove non-numeric characters except decimal point
+  const numericValue = revenue.replace(/[^0-9.]/g, '');
+  const number = parseFloat(numericValue);
+
+  if (isNaN(number)) return revenue;
+
+  if (number >= 1e9) {
+    return `${(number / 1e9).toFixed(0)} billion dollars`;
+  } else if (number >= 1e6) {
+    return `${(number / 1e6).toFixed(0)} million dollars`;
+  } else if (number >= 1e3) {
+    return `${(number / 1e3).toFixed(0)} thousand dollars`;
+  }
+  
+  return `${number} dollars`;
+}
+
 async function fetchContactInfo(email: string) {
   try {
     // Search for contact by email
@@ -138,7 +156,7 @@ async function fetchContactInfo(email: string) {
       companyDetails: {
         industry: companyData?.properties?.industry || fallbackCompany.industry,
         size: companyData?.properties?.numberofemployees || fallbackCompany.size,
-        revenue: companyData?.properties?.annualrevenue || fallbackCompany.revenue
+        revenue: formatRevenue(companyData?.properties?.annualrevenue || fallbackCompany.revenue)
       }
     };
   } catch (error) {

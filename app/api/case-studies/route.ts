@@ -3,55 +3,55 @@ import { NextResponse } from 'next/server';
 const caseStudies = [
   {
     id: '1',
-    companyName: 'TechCorp Solutions',
+    companyName: 'SalesForce Direct',
     industry: 'Software',
-    challenge: 'Needed to automate sales outreach to new leads',
-    solution: 'Leveraged our AI-powered avatar system to automate sales outreach to new leads',
+    challenge: 'Sales team was overwhelmed with initial prospect meetings and qualification calls',
+    solution: 'Deployed interactive AI sales avatars to handle initial prospect meetings and qualification',
     results: [
-      '300% increase in meeting booking rate',
-      '45% reduction in sales cycle length',
-      '85% positive prospect feedback'
+      '400% increase in qualified leads processed',
+      '65% reduction in sales rep burnout',
+      '92% prospect satisfaction with initial meetings'
     ],
-    testimonial: "The AI avatar system transformed our sales process, making it more efficient and personalized."
+    testimonial: "The AI sales avatars handle our first meetings perfectly, letting our reps focus on closing deals."
   },
   {
-    id: '2', 
-    companyName: 'Enterprise Systems Inc',
-    industry: 'Information Technology and Services',
-    challenge: 'Struggled with scaling personalized demos and product presentations',
-    solution: 'Implemented AI avatars for product demonstrations and customer onboarding',
+    id: '2',
+    companyName: 'Global Solutions Corp',
+    industry: 'Information Technology and Services', 
+    challenge: 'Needed 24/7 sales coverage across multiple time zones',
+    solution: 'Implemented AI sales avatars to provide round-the-clock prospect engagement',
     results: [
-      '200% increase in demo completion rates',
-      '40% higher conversion from demo to purchase',
-      'Reduced demo scheduling wait times by 75%'
+      '300% increase in international lead conversion',
+      'Sales coverage expanded to 24/7/365',
+      '78% reduction in prospect wait times'
     ],
-    testimonial: "The AI avatars allowed us to provide consistent, high-quality demos 24/7."
+    testimonial: "Our AI sales avatars never sleep, ensuring we never miss an opportunity regardless of timezone."
   },
   {
     id: '3',
-    companyName: 'Global Finance Group',
+    companyName: 'TechStart Ventures',
     industry: 'Financial_Services',
-    challenge: 'High customer service representative turnover and training costs',
-    solution: 'Deployed AI avatars for first-line customer support and common inquiries',
+    challenge: 'High cost of training junior sales reps and inconsistent prospect experiences',
+    solution: 'Adopted AI sales avatars to standardize initial prospect engagement',
     results: [
-      '60% reduction in support costs',
-      '90% customer satisfaction rate',
-      '24/7 support availability achieved'
+      '85% reduction in initial training costs',
+      '95% consistency in prospect qualification',
+      'Doubled qualified pipeline generation'
     ],
-    testimonial: "Our customers love the instant responses and consistent service quality."
+    testimonial: "The AI avatars deliver perfectly consistent prospect experiences while our reps focus on relationships."
   },
   {
     id: '4',
-    companyName: 'HealthTech Solutions',
+    companyName: 'MedTech Innovations',
     industry: 'Healthcare',
-    challenge: 'Needed to improve patient education and engagement',
-    solution: 'Implemented AI avatars for patient education and follow-up care instructions',
+    challenge: 'Complex product explanations taking up too much sales rep time',
+    solution: 'Leveraged AI sales avatars for initial product demonstrations and feature explanations',
     results: [
-      '80% improvement in patient understanding',
-      '40% reduction in follow-up questions',
-      '95% patient satisfaction rate'
+      '75% reduction in rep time spent on basic demos',
+      '90% prospect comprehension rate',
+      '3x increase in qualified opportunities'
     ],
-    testimonial: "Patients feel more comfortable asking questions and getting detailed explanations from the AI avatar."
+    testimonial: "Our AI sales avatars handle the heavy lifting of product education, freeing our reps to focus on consultative selling."
   }
 ];
 

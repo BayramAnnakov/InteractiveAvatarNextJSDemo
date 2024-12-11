@@ -26,6 +26,7 @@ import InteractiveAvatarTextInput from "./InteractiveAvatarTextInput";
 
 import {AVATARS, STT_LANGUAGE_LIST} from "@/app/lib/constants";
 import { ProspectInfo, MeetingSummary, SalesContext } from "@/app/types/sales";
+import ChromaKeyVideo from './ChromaKeyVideo';
 
 type MeetingPhase = 'briefing' | 'meeting' | 'case-study' | 'summary';
 
@@ -51,8 +52,6 @@ export default function InteractiveAvatar() {
   const [text, setText] = useState<string>("");
   const mediaStream = useRef<HTMLVideoElement>(null);
   const avatar = useRef<StreamingAvatar | null>(null);
-  const [chatMode, setChatMode] = useState("text_mode");
-  const [isUserTalking, setIsUserTalking] = useState(false);
 
   const [salesContext, setSalesContext] = useState<SalesContext>({
     currentPhase: 'briefing'
@@ -61,6 +60,8 @@ export default function InteractiveAvatar() {
   const [meetingSummary, setMeetingSummary] = useState<MeetingSummary>();
   const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
   const [selectedCaseStudy, setSelectedCaseStudy] = useState<CaseStudy>();
+
+  const [language, setLanguage] = useState<string>('en');
 
   async function fetchAccessToken() {
     try {
@@ -102,11 +103,10 @@ export default function InteractiveAvatar() {
     });
     avatar.current?.on(StreamingEvents.USER_START, (event) => {
       console.log(">>>>> User started talking:", event);
-      setIsUserTalking(true);
+      // handleInterrupt();
     });
     avatar.current?.on(StreamingEvents.USER_STOP, (event) => {
       console.log(">>>>> User stopped talking:", event);
-      setIsUserTalking(false);
     });
     try {
       const res = await avatar.current.createStartAvatar({
@@ -114,7 +114,7 @@ export default function InteractiveAvatar() {
         avatarName: "Anna_public_3_20240108",
         voice: {
           rate: 1.2,
-          emotion: VoiceEmotion.FRIENDLY,
+          emotion: VoiceEmotion.EXCITED,
         },
         language: 'en',
         disableIdleTimeout: true,
@@ -128,7 +128,6 @@ export default function InteractiveAvatar() {
       await avatar.current?.startVoiceChat({
         useSilencePrompt: false
       });
-      setChatMode("text_mode");
     } catch (error) {
       console.error("Error starting avatar session:", error);
       setDebug("Error starting session: " + (error as Error).message);
@@ -144,7 +143,11 @@ export default function InteractiveAvatar() {
       return;
     }
     // speak({ text: text, task_type: TaskType.REPEAT })
-    await avatar.current.speak({ text: text, taskType: TaskType.REPEAT, taskMode: TaskMode.SYNC }).catch((e) => {
+    await avatar.current.speak({ 
+      text: text, 
+      taskType: TaskType.REPEAT, 
+      taskMode: TaskMode.SYNC 
+    }).catch((e) => {
       setDebug(e.message);
     });
     setIsLoadingRepeat(false);
@@ -165,18 +168,6 @@ export default function InteractiveAvatar() {
     await avatar.current?.stopAvatar();
     setStream(undefined);
   }
-
-  const handleChangeChatMode = useMemoizedFn(async (v) => {
-    if (v === chatMode) {
-      return;
-    }
-    if (v === "text_mode") {
-      avatar.current?.closeVoiceChat();
-    } else {
-      await avatar.current?.startVoiceChat();
-    }
-    setChatMode(v);
-  });
 
   const previousText = usePrevious(text);
   useEffect(() => {
@@ -392,38 +383,42 @@ export default function InteractiveAvatar() {
                 transition={{ duration: 0.5 }}
                 className="absolute top-0 left-0 w-full h-full"
               >
-                <video
-                  ref={mediaStream}
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-contain bg-[#1d1d1f]"
-                >
-                  <track kind="captions" />
-                </video>
+                <div className="h-[500px] w-[900px] justify-center items-center flex rounded-lg overflow-hidden" 
+                     style={{ backgroundColor: "#121212" }}>
+                  <video
+                    ref={mediaStream}
+                    autoPlay
+                    playsInline
+                    style={{ display: 'none' }}
+                  >
+                    <track kind="captions" />
+                  </video>
+                  <ChromaKeyVideo videoRef={mediaStream} />
 
-                {/* Control buttons with Apple-style design */}
-                <div className="absolute bottom-6 right-6 flex flex-col gap-3">
-                  <motion.button
-                    onClick={handleInterrupt}
-                    className="px-6 py-2.5 rounded-full bg-white/10 backdrop-blur-xl
-                      border border-white/20 text-white
-                      hover:bg-white/20 transition-all duration-300 text-sm font-medium
-                      shadow-lg"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Interrupt
-                  </motion.button>
-                  <motion.button
-                    onClick={endSession}
-                    className="px-6 py-2.5 rounded-full bg-[#ff453a] backdrop-blur-xl
-                      text-white hover:bg-[#ff564f] transition-all duration-300
-                      text-sm font-medium shadow-lg"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    End Session
-                  </motion.button>
+                  {/* Control buttons with Apple-style design */}
+                  <div className="absolute bottom-6 right-6 flex flex-col gap-3">
+                    <motion.button
+                      onClick={handleInterrupt}
+                      className="px-6 py-2.5 rounded-full bg-white/10 backdrop-blur-xl
+                        border border-white/20 text-white
+                        hover:bg-white/20 transition-all duration-300 text-sm font-medium
+                        shadow-lg"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      Interrupt
+                    </motion.button>
+                    <motion.button
+                      onClick={endSession}
+                      className="px-6 py-2.5 rounded-full bg-[#ff453a] backdrop-blur-xl
+                        text-white hover:bg-[#ff564f] transition-all duration-300
+                        text-sm font-medium shadow-lg"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      End Session
+                    </motion.button>
+                  </div>
                 </div>
               </motion.div>
             ) : !isLoadingSession ? (
@@ -472,69 +467,35 @@ export default function InteractiveAvatar() {
 
           {/* Chat interface with refined styling */}
           <div className="p-6 border-t border-white/10">
-            <div className="flex gap-4 mb-4">
-              {['Text Mode', 'Voice Mode'].map((mode) => (
-                <motion.button
-                  key={mode}
-                  onClick={() => handleChangeChatMode(mode.toLowerCase().replace(' ', '_'))}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300
-                    ${chatMode === mode.toLowerCase().replace(' ', '_')
-                      ? 'bg-white text-black'
-                      : 'bg-[#2d2d2f] text-white hover:bg-[#3d3d3f]'}`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {mode}
-                </motion.button>
-              ))}
+            <div className="relative">
+              <input
+                type="text"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Type something for the avatar to respond"
+                className="w-full px-4 py-3 rounded-lg bg-[#2d2d2f] text-white border border-white/10
+                  focus:border-[#0071e3] focus:ring-1 focus:ring-[#0071e3] transition-all duration-300
+                  placeholder-white/40"
+              />
+              <AnimatePresence>
+                {text && (
+                  <motion.span
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 
+                      text-xs font-medium text-white/60"
+                  >
+                    Listening...
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
-
-            {chatMode === "text_mode" ? (
-              <div className="relative">
-                <input
-                  type="text"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Type something for the avatar to respond"
-                  className="w-full px-4 py-3 rounded-lg bg-[#2d2d2f] text-white border border-white/10
-                    focus:border-[#0071e3] focus:ring-1 focus:ring-[#0071e3] transition-all duration-300
-                    placeholder-white/40"
-                />
-                <AnimatePresence>
-                  {text && (
-                    <motion.span
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 10 }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 
-                        text-xs font-medium text-white/60"
-                    >
-                      Listening...
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <div className="text-center">
-                <motion.button
-                  disabled={!isUserTalking}
-                  className={`px-6 py-2 rounded-full ${
-                    isUserTalking
-                      ? 'bg-[#0071e3] text-white'
-                      : 'bg-[#2d2d2f] text-white/60'
-                  }`}
-                  whileHover={{ scale: isUserTalking ? 1.02 : 1 }}
-                  whileTap={{ scale: isUserTalking ? 0.98 : 1 }}
-                >
-                  {isUserTalking ? "Listening..." : "Voice Chat"}
-                </motion.button>
-              </div>
-            )}
           </div>
         </motion.div>
 
         {/* Debug console with refined styling */}
-        <AnimatePresence>
+        {/* <AnimatePresence>
           {debug && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -547,7 +508,7 @@ export default function InteractiveAvatar() {
               {debug}
             </motion.div>
           )}
-        </AnimatePresence>
+        </AnimatePresence> */}
       </div>
     </div>
   );

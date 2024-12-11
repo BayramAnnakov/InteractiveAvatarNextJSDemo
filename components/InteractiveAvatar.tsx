@@ -370,7 +370,32 @@ export default function InteractiveAvatar() {
         {/* Add case study overlay */}
         {salesContext.currentPhase === 'case-study' && selectedCaseStudy && (
           <div className="absolute top-24 right-8 z-10 w-96">
-            <div className="bg-[#1d1d1f]/90 backdrop-blur-xl rounded-2xl p-6 shadow-xl">
+            <div className="bg-[#1d1d1f]/90 backdrop-blur-xl rounded-2xl p-6 shadow-xl relative">
+              {/* Add close button */}
+              <button
+                onClick={() => setSelectedCaseStudy(undefined)}
+                className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#1d1d1f] 
+                  border border-white/10 text-white/60 hover:text-white
+                  flex items-center justify-center transition-colors
+                  shadow-lg backdrop-blur-xl"
+              >
+                <svg 
+                  width="14" 
+                  height="14" 
+                  viewBox="0 0 14 14" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path 
+                    d="M1 1L13 13M1 13L13 1" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+
+              {/* Rest of the case study content */}
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl font-semibold">{selectedCaseStudy.companyName}</h3>

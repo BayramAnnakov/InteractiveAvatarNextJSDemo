@@ -20,6 +20,7 @@ import {
 } from "@nextui-org/react";
 import { useEffect, useRef, useState } from "react";
 import { useMemoizedFn, usePrevious } from "ahooks";
+import { motion, AnimatePresence } from 'framer-motion';
 
 import InteractiveAvatarTextInput from "./InteractiveAvatarTextInput";
 
@@ -350,174 +351,141 @@ export default function InteractiveAvatar() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#000000] text-white">
-      {/* Phase indicator */}
+    <div className="w-full min-h-screen bg-[#000000] text-white font-sf-pro">
+      {/* Phase indicator with Apple-style animations */}
       <div className="max-w-7xl mx-auto py-8">
-        <div className="flex justify-center gap-4 mb-12">
+        <motion.div 
+          className="flex justify-center gap-4 mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           {['Briefing', 'Meeting', 'Case Study', 'Summary'].map((phase) => (
-            <button
+            <motion.button
               key={phase}
               onClick={() => handlePhaseChange(phase.toLowerCase().replace(' ', '-') as MeetingPhase)}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300
+                backdrop-blur-xl border
                 ${salesContext.currentPhase === phase.toLowerCase().replace(' ', '-')
-                  ? 'bg-white text-black' 
-                  : 'bg-[#1d1d1f] text-white hover:bg-[#2d2d2f]'}`}
+                  ? 'bg-white text-black border-transparent shadow-lg' 
+                  : 'bg-[#1d1d1f]/50 text-white border-white/10 hover:bg-[#2d2d2f]/50'}`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               {phase}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
 
-        {/* Add case study overlay */}
-        {salesContext.currentPhase === 'case-study' && selectedCaseStudy && (
-          <div className="absolute top-24 right-8 z-10 w-96">
-            <div className="bg-[#1d1d1f]/90 backdrop-blur-xl rounded-2xl p-6 shadow-xl relative">
-              {/* Add close button */}
-              <button
-                onClick={() => setSelectedCaseStudy(undefined)}
-                className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#1d1d1f] 
-                  border border-white/10 text-white/60 hover:text-white
-                  flex items-center justify-center transition-colors
-                  shadow-lg backdrop-blur-xl"
-              >
-                <svg 
-                  width="14" 
-                  height="14" 
-                  viewBox="0 0 14 14" 
-                  fill="none" 
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path 
-                    d="M1 1L13 13M1 13L13 1" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-
-              {/* Rest of the case study content */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-xl font-semibold">{selectedCaseStudy.companyName}</h3>
-                  <span className="text-sm text-white/60">{selectedCaseStudy.industry}</span>
-                </div>
-                {selectedCaseStudy.logoUrl && (
-                  <img 
-                    src={selectedCaseStudy.logoUrl} 
-                    alt={`${selectedCaseStudy.companyName} logo`}
-                    className="h-12 w-12 object-contain"
-                  />
-                )}
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium text-white/80 mb-1">Challenge</h4>
-                  <p className="text-sm">{selectedCaseStudy.challenge}</p>
-                </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium text-white/80 mb-1">Solution</h4>
-                  <p className="text-sm">{selectedCaseStudy.solution}</p>
-                </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium text-white/80 mb-1">Results</h4>
-                  <ul className="list-disc list-inside text-sm space-y-1">
-                    {selectedCaseStudy.results.map((result, index) => (
-                      <li key={index} className="text-white/80">{result}</li>
-                    ))}
-                  </ul>
-                </div>
-                
-                {selectedCaseStudy.testimonial && (
-                  <div className="border-l-2 border-[#0071e3] pl-4 mt-6">
-                    <p className="text-sm italic text-white/90">"{selectedCaseStudy.testimonial}"</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Main content */}
-        <div className="rounded-2xl overflow-hidden bg-[#1d1d1f] mb-8">
+        {/* Main content area with refined styling */}
+        <motion.div 
+          className="rounded-2xl overflow-hidden bg-gradient-to-b from-[#1d1d1f] to-[#1d1d1f]/90 backdrop-blur-xl border border-white/10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
             {stream ? (
-              <video
-                ref={mediaStream}
-                autoPlay
-                playsInline
-                className="absolute top-0 left-0 w-full h-full object-contain bg-[#1d1d1f]"
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="absolute top-0 left-0 w-full h-full"
               >
-                <track kind="captions" />
-              </video>
+                <video
+                  ref={mediaStream}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-contain bg-[#1d1d1f]"
+                >
+                  <track kind="captions" />
+                </video>
+
+                {/* Control buttons with Apple-style design */}
+                <div className="absolute bottom-6 right-6 flex flex-col gap-3">
+                  <motion.button
+                    onClick={handleInterrupt}
+                    className="px-6 py-2.5 rounded-full bg-white/10 backdrop-blur-xl
+                      border border-white/20 text-white
+                      hover:bg-white/20 transition-all duration-300 text-sm font-medium
+                      shadow-lg"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Interrupt
+                  </motion.button>
+                  <motion.button
+                    onClick={endSession}
+                    className="px-6 py-2.5 rounded-full bg-[#ff453a] backdrop-blur-xl
+                      text-white hover:bg-[#ff564f] transition-all duration-300
+                      text-sm font-medium shadow-lg"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    End Session
+                  </motion.button>
+                </div>
+              </motion.div>
             ) : !isLoadingSession ? (
-              <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center p-8">
-                <div className="max-w-md w-full">
+              <motion.div 
+                className="absolute top-0 left-0 w-full h-full flex items-center justify-center p-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="max-w-md w-full space-y-4">
                   <input
                     type="email"
                     placeholder="Enter prospect email"
                     value={prospectEmail}
                     onChange={(e) => setProspectEmail(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="w-full px-4 py-3 rounded-lg bg-[#2d2d2f] text-white border-none mb-4"
+                    className="w-full px-4 py-3 rounded-lg bg-[#2d2d2f] text-white border border-white/10
+                      focus:border-[#0071e3] focus:ring-1 focus:ring-[#0071e3] transition-all duration-300
+                      placeholder-white/40"
                   />
-                  <button
+                  <motion.button
                     onClick={startSession}
                     disabled={!prospectEmail}
                     className="w-full bg-[#0071e3] text-white rounded-lg px-4 py-3 font-medium
-                      hover:bg-[#0077ed] transition-colors disabled:opacity-50"
+                      hover:bg-[#0077ed] transition-all duration-300 disabled:opacity-50
+                      disabled:hover:bg-[#0071e3]"
+                    whileHover={{ scale: prospectEmail ? 1.02 : 1 }}
+                    whileTap={{ scale: prospectEmail ? 0.98 : 1 }}
                   >
                     Start Session
-                  </button>
+                  </motion.button>
                 </div>
-              </div>
+              </motion.div>
             ) : (
               <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                <Spinner color="white" size="lg" />
-              </div>
-            )}
-
-            {/* Control buttons */}
-            {stream && (
-              <div className="absolute bottom-6 right-6 flex flex-col gap-3">
-                <button
-                  onClick={handleInterrupt}
-                  className="px-6 py-2.5 rounded-full bg-white/10 backdrop-blur-xl
-                    border border-white/20 text-white
-                    hover:bg-white/20 transition-all duration-200 text-sm font-medium
-                    shadow-lg"
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  Interrupt
-                </button>
-                <button
-                  onClick={endSession}
-                  className="px-6 py-2.5 rounded-full bg-[#ff453a] backdrop-blur-xl
-                    text-white hover:bg-[#ff564f] transition-all duration-200
-                    text-sm font-medium shadow-lg"
-                >
-                  End Session
-                </button>
+                  <Spinner color="white" size="lg" />
+                </motion.div>
               </div>
             )}
           </div>
 
-          {/* Chat interface */}
-          <div className="p-6 border-t border-[#2d2d2f]">
+          {/* Chat interface with refined styling */}
+          <div className="p-6 border-t border-white/10">
             <div className="flex gap-4 mb-4">
               {['Text Mode', 'Voice Mode'].map((mode) => (
-                <button
+                <motion.button
                   key={mode}
                   onClick={() => handleChangeChatMode(mode.toLowerCase().replace(' ', '_'))}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300
                     ${chatMode === mode.toLowerCase().replace(' ', '_')
                       ? 'bg-white text-black'
                       : 'bg-[#2d2d2f] text-white hover:bg-[#3d3d3f]'}`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   {mode}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -528,40 +496,58 @@ export default function InteractiveAvatar() {
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Type something for the avatar to respond"
-                  className="w-full px-4 py-3 rounded-lg bg-[#2d2d2f] text-white border-none"
+                  className="w-full px-4 py-3 rounded-lg bg-[#2d2d2f] text-white border border-white/10
+                    focus:border-[#0071e3] focus:ring-1 focus:ring-[#0071e3] transition-all duration-300
+                    placeholder-white/40"
                 />
-                {text && (
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 
-                    text-xs font-medium text-white/60">
-                    Listening...
-                  </span>
-                )}
+                <AnimatePresence>
+                  {text && (
+                    <motion.span
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 
+                        text-xs font-medium text-white/60"
+                    >
+                      Listening...
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <div className="text-center">
-                <button
+                <motion.button
                   disabled={!isUserTalking}
                   className={`px-6 py-2 rounded-full ${
                     isUserTalking
                       ? 'bg-[#0071e3] text-white'
                       : 'bg-[#2d2d2f] text-white/60'
                   }`}
+                  whileHover={{ scale: isUserTalking ? 1.02 : 1 }}
+                  whileTap={{ scale: isUserTalking ? 0.98 : 1 }}
                 >
                   {isUserTalking ? "Listening..." : "Voice Chat"}
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Debug console */}
-        {debug && (
-          <div className="text-xs font-mono text-white/60 text-right">
-            <span className="font-bold">Console:</span>
-            <br />
-            {debug}
-          </div>
-        )}
+        {/* Debug console with refined styling */}
+        <AnimatePresence>
+          {debug && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="mt-4 text-xs font-mono text-white/60 text-right"
+            >
+              <span className="font-bold">Console:</span>
+              <br />
+              {debug}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

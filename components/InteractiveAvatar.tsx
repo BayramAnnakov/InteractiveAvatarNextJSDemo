@@ -71,6 +71,8 @@ export default function InteractiveAvatar() {
 
   const [language, setLanguage] = useState<string>('en');
 
+  const [isWebSocketReady, setIsWebSocketReady] = useState(false);
+
   async function fetchAccessToken() {
     try {
       const response = await fetch("/api/get-access-token", {
@@ -105,11 +107,13 @@ export default function InteractiveAvatar() {
     });
     avatar.current.on(StreamingEvents.STREAM_DISCONNECTED, () => {
       console.log("Stream disconnected");
+      setIsWebSocketReady(false);
       endSession();
     });
     avatar.current?.on(StreamingEvents.STREAM_READY, (event) => {
-      console.log(">>>>> Stream ready:", event.detail);
+      console.log("Stream ready:", event.detail);
       setStream(event.detail);
+      setIsWebSocketReady(true);
     });
     avatar.current?.on(StreamingEvents.USER_START, (event) => {
       console.log(">>>>> User started talking:", event);
@@ -128,6 +132,7 @@ export default function InteractiveAvatar() {
         },
         language: 'en',
         disableIdleTimeout: true,
+        knowledgeBase: "You are AI Sales Associate Avatar. You help Bayram, the account executive at onsa.ai, to run meetings with prospects. Your current prospect is John Doe from ACME Markets, a company in the Information Technology & Services industry with 200 employees and $10M in annual revenue. Relevant case study is Global Solutions Corp. that needed 24/7 sales coverage across multiple time zones. Onsa.ai helped them implement AI sales avatars to provide round-the-clock prospect engagement. This resulted in 300% increase in international lead conversion, sales coverage expanded to 24/7/365, and 78% reduction in prospect wait times."
         
       });
 
@@ -181,30 +186,52 @@ export default function InteractiveAvatar() {
       });
   }
   async function endSession() {
-    await avatar.current?.stopAvatar();
-    setStream(undefined);
+    try {
+      if (avatar.current) {
+        if (chatMode === "voice_mode") {
+          await avatar.current.closeVoiceChat().catch(console.error);
+        }
+        await avatar.current.stopAvatar().catch(console.error);
+        avatar.current = null;
+      }
+      setStream(undefined);
+      setIsWebSocketReady(false);
+      setChatMode("text_mode");
+    } catch (error) {
+      console.error("Error during session cleanup:", error);
+    }
   }
 
   const handleChangeChatMode = useMemoizedFn(async (v) => {
-    if (v === chatMode) {
+    if (v === chatMode || !isWebSocketReady) {
       return;
     }
     
     try {
       if (v === "text_mode") {
-        await avatar.current?.closeVoiceChat();
-        setChatMode(v);
+        if (avatar.current?.closeVoiceChat) {
+          await avatar.current.closeVoiceChat();
+          setChatMode(v);
+        }
       } else {
-        // Request microphone permission first
         try {
-          // First check if we need to reinitialize the avatar
-          if (!avatar.current || !stream) {
-            console.log("Reinitializing avatar session...");
+          // First ensure WebSocket is ready
+          if (!isWebSocketReady) {
+            console.log("WebSocket not ready, reinitializing...");
             await endSession();
             await startSession();
+            // Wait for WebSocket to be ready
+            await new Promise((resolve) => {
+              const checkReady = setInterval(() => {
+                if (isWebSocketReady) {
+                  clearInterval(checkReady);
+                  resolve(true);
+                }
+              }, 100);
+            });
           }
 
-          // Then request microphone permission
+          // Rest of your voice chat initialization code...
           const audioStream = await navigator.mediaDevices.getUserMedia({ 
             audio: {
               echoCancellation: true,
@@ -213,38 +240,23 @@ export default function InteractiveAvatar() {
             }
           });
           
-          // Keep the audio stream active for voice chat
           window.audioStream = audioStream;
-
-          await new Promise((resolve) => setTimeout(resolve, 1000)); // Small delay
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
-          await avatar.current?.startVoiceChat({
-            useSilencePrompt: false
-          });
-          
-          setChatMode(v);
-        } catch (permissionError) {
-          console.error("Microphone permission denied:", permissionError);
-          setDebug("Please allow microphone access to use voice chat");
-          
-          // Cleanup any partial audio stream
-          if (window.audioStream) {
-            window.audioStream.getTracks().forEach(track => track.stop());
-            delete window.audioStream;
+          if (avatar.current?.startVoiceChat) {
+            await avatar.current.startVoiceChat({
+              useSilencePrompt: false
+            });
+            setChatMode(v);
           }
+        } catch (permissionError) {
+          console.error("Error:", permissionError);
+          setDebug("Error: " + permissionError.message);
         }
       }
     } catch (error) {
       console.error("Error changing chat mode:", error);
       setDebug("Failed to change chat mode: " + (error as Error).message);
-      
-      // Attempt recovery
-      try {
-        await endSession();
-        await startSession();
-      } catch (recoveryError) {
-        console.error("Recovery failed:", recoveryError);
-      }
     }
   });
 

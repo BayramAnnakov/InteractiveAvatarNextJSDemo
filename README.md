@@ -1,6 +1,6 @@
 # Sales Associate Interactive Avatar Demo
 
-![HeyGen Interactive Avatar NextJS Demo Screenshot](./public/demo.png)
+![Sales Associate Interactive Avatar Demo Screenshot](./public/demo.png)
 
 This project is a fork of the [HeyGen Interactive Avatar NextJS Demo](https://github.com/HeyGen-Official/StreamingAvatarSDK). Please follow their setup instructions first to get the base Interactive Avatar functionality working.
 

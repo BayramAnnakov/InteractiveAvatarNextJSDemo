@@ -41,6 +41,12 @@ interface CaseStudy {
   logoUrl?: string;
 }
 
+declare global {
+  interface Window {
+    audioStream?: MediaStream;
+  }
+}
+
 export default function InteractiveAvatar() {
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isLoadingRepeat, setIsLoadingRepeat] = useState(false);
@@ -89,6 +95,8 @@ export default function InteractiveAvatar() {
     avatar.current = new StreamingAvatar({
       token: newToken,
     });
+
+    
     avatar.current.on(StreamingEvents.AVATAR_START_TALKING, (e) => {
       console.log("Avatar started talking", e);
     });
@@ -116,7 +124,7 @@ export default function InteractiveAvatar() {
         avatarName: "Anna_public_3_20240108",
         voice: {
           rate: 1.2,
-          emotion: VoiceEmotion.EXCITED,
+          emotion: VoiceEmotion.FRIENDLY,
         },
         language: 'en',
         disableIdleTimeout: true,
@@ -126,10 +134,13 @@ export default function InteractiveAvatar() {
       setData(res);
       
       await fetchProspectInfo(prospectEmail);
+
+      // const result = avatar.current?.startVoiceChat();
+      // console.log("Result:", result);
       
-      await avatar.current?.startVoiceChat({
-        useSilencePrompt: false
-      });
+      // // await avatar.current?.startVoiceChat({
+      // //   useSilencePrompt: false
+      // // });
 
       setChatMode("text_mode");
 
@@ -178,12 +189,63 @@ export default function InteractiveAvatar() {
     if (v === chatMode) {
       return;
     }
-    if (v === "text_mode") {
-      avatar.current?.closeVoiceChat();
-    } else {
-      await avatar.current?.startVoiceChat();
+    
+    try {
+      if (v === "text_mode") {
+        await avatar.current?.closeVoiceChat();
+        setChatMode(v);
+      } else {
+        // Request microphone permission first
+        try {
+          // First check if we need to reinitialize the avatar
+          if (!avatar.current || !stream) {
+            console.log("Reinitializing avatar session...");
+            await endSession();
+            await startSession();
+          }
+
+          // Then request microphone permission
+          const audioStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+          
+          // Keep the audio stream active for voice chat
+          window.audioStream = audioStream;
+
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // Small delay
+          
+          await avatar.current?.startVoiceChat({
+            useSilencePrompt: false
+          });
+          
+          setChatMode(v);
+        } catch (permissionError) {
+          console.error("Microphone permission denied:", permissionError);
+          setDebug("Please allow microphone access to use voice chat");
+          
+          // Cleanup any partial audio stream
+          if (window.audioStream) {
+            window.audioStream.getTracks().forEach(track => track.stop());
+            delete window.audioStream;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error changing chat mode:", error);
+      setDebug("Failed to change chat mode: " + (error as Error).message);
+      
+      // Attempt recovery
+      try {
+        await endSession();
+        await startSession();
+      } catch (recoveryError) {
+        console.error("Recovery failed:", recoveryError);
+      }
     }
-    setChatMode(v);
   });
 
   const previousText = usePrevious(text);
@@ -197,6 +259,10 @@ export default function InteractiveAvatar() {
 
   useEffect(() => {
     return () => {
+      if (window.audioStream) {
+        window.audioStream.getTracks().forEach(track => track.stop());
+        delete window.audioStream;
+      }
       endSession();
     };
   }, []);
@@ -420,6 +486,17 @@ export default function InteractiveAvatar() {
 
                   {/* Control buttons with Apple-style design */}
                   <div className="absolute bottom-6 right-6 flex flex-col gap-3">
+                    <motion.button
+                      onClick={() => handleChangeChatMode(chatMode === "text_mode" ? "voice_mode" : "text_mode")}
+                      className={`px-6 py-2.5 rounded-full backdrop-blur-xl
+                        border border-white/20 text-white
+                        hover:bg-white/20 transition-all duration-300 text-sm font-medium
+                        shadow-lg ${chatMode === "voice_mode" ? 'bg-[#0071e3]' : 'bg-white/10'}`}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {chatMode === "text_mode" ? "Switch to Voice" : "Switch to Text"}
+                    </motion.button>
                     <motion.button
                       onClick={handleInterrupt}
                       className="px-6 py-2.5 rounded-full bg-white/10 backdrop-blur-xl

@@ -47,31 +47,32 @@ ${meetingSummary.opportunities.map(opp => `- ${opp}`).join('\n')}
 
     // Create individual tasks for each action item
     if (meetingSummary.nextSteps.length > 0) {
-      const taskResponses = await Promise.all(meetingSummary.nextSteps.map(step => {
-        return hubspotClient.apiRequest({
+      await Promise.all(meetingSummary.nextSteps.map(async step => {
+        // Create task
+        const taskResponse = await hubspotClient.apiRequest({
           method: 'POST',
           path: '/crm/v3/objects/tasks',
           body: {
             properties: {
               hs_task_body: step,
-              hs_task_priority: 'HIGH', 
-              hs_task_status: 'NOT_STARTED',
+              hs_task_priority: 'HIGH',
+              hs_task_status: 'NOT_STARTED', 
               hs_task_subject: `Action Item: ${step.slice(0, 50)}...`,
               hs_timestamp: new Date().toISOString()
             }
           }
         });
+
+        const taskData = await taskResponse.json();
+
+        // Create association for the task
+        if (taskData.id) {
+          await hubspotClient.apiRequest({
+            method: 'PUT',
+            path: `/crm/v3/objects/tasks/${taskData.id}/associations/contacts/${meetingSummary.prospectId}/task_to_contact`,
+          });
+        }
       }));
-
-      const taskData = await taskResponse.json();
-
-      // Create association for the task
-      if (taskData.id) {
-        await hubspotClient.apiRequest({
-          method: 'PUT',
-          path: `/crm/v3/objects/tasks/${taskData.id}/associations/contacts/${meetingSummary.prospectId}/task_to_contact`,
-        });
-      }
     }
 
     return NextResponse.json({ 

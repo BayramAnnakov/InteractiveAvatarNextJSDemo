@@ -280,14 +280,17 @@ export default function InteractiveAvatar() {
       ...prev, 
       currentPhase: newPhase as "briefing" | "meeting" | "summary" 
     }));
+
+    handleInterrupt();
     
     let message = '';
     switch (newPhase) {
       case 'briefing':
         if (prospectInfo) {
           message = `Let me brief you about ${prospectInfo.name} from ${prospectInfo.company}. 
-          They are the ${prospectInfo.position} and their main pain points are ${prospectInfo.painPoints.join(', ')}. 
-          Previous interactions: ${prospectInfo.previousInteractions.join(', ')}.`;
+          They are the ${prospectInfo.position} and their company is in the ${prospectInfo.companyDetails.industry} industry
+          with ${prospectInfo.companyDetails.size} employees and ${prospectInfo.companyDetails.revenue} in annual revenue.
+          Previous interactions include: ${prospectInfo.previousInteractions.join(', ')}.`;
         }
         break;
       
@@ -486,7 +489,7 @@ export default function InteractiveAvatar() {
           </div>
 
           {/* Chat interface with refined styling */}
-          <div className="p-6 border-t border-white/10">
+          {/* <div className="p-6 border-t border-white/10">
             <div className="relative">
               <input
                 type="text"
@@ -511,7 +514,7 @@ export default function InteractiveAvatar() {
                 )}
               </AnimatePresence>
             </div>
-          </div>
+          </div> */}
         </motion.div>
 
         {/* Debug console with refined styling */}

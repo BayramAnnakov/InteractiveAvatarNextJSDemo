@@ -45,21 +45,23 @@ ${meetingSummary.opportunities.map(opp => `- ${opp}`).join('\n')}
       });
     }
 
-    // Create follow-up task
+    // Create individual tasks for each action item
     if (meetingSummary.nextSteps.length > 0) {
-      const taskResponse = await hubspotClient.apiRequest({
-        method: 'POST',
-        path: '/crm/v3/objects/tasks',
-        body: {
-          properties: {
-            hs_task_body: `Follow up on meeting with ${meetingSummary.prospectId}`,
-            hs_task_priority: 'HIGH',
-            hs_task_status: 'NOT_STARTED',
-            hs_task_subject: 'Follow up on sales meeting',
-            hs_timestamp: new Date().toISOString()
+      const taskResponses = await Promise.all(meetingSummary.nextSteps.map(step => {
+        return hubspotClient.apiRequest({
+          method: 'POST',
+          path: '/crm/v3/objects/tasks',
+          body: {
+            properties: {
+              hs_task_body: step,
+              hs_task_priority: 'HIGH', 
+              hs_task_status: 'NOT_STARTED',
+              hs_task_subject: `Action Item: ${step.slice(0, 50)}...`,
+              hs_timestamp: new Date().toISOString()
+            }
           }
-        }
-      });
+        });
+      }));
 
       const taskData = await taskResponse.json();
 

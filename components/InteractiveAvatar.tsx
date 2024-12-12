@@ -112,7 +112,7 @@ export default function InteractiveAvatar() {
     });
     try {
       const res = await avatar.current.createStartAvatar({
-        quality: AvatarQuality.High,
+        quality: AvatarQuality.Medium,
         avatarName: "Anna_public_3_20240108",
         voice: {
           rate: 1.2,

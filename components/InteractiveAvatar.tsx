@@ -52,6 +52,8 @@ export default function InteractiveAvatar() {
   const [text, setText] = useState<string>("");
   const mediaStream = useRef<HTMLVideoElement>(null);
   const avatar = useRef<StreamingAvatar | null>(null);
+  const [chatMode, setChatMode] = useState("text_mode");
+  const [isUserTalking, setIsUserTalking] = useState(false);
 
   const [salesContext, setSalesContext] = useState<SalesContext>({
     currentPhase: 'briefing'
@@ -128,6 +130,9 @@ export default function InteractiveAvatar() {
       await avatar.current?.startVoiceChat({
         useSilencePrompt: false
       });
+
+      setChatMode("text_mode");
+
     } catch (error) {
       console.error("Error starting avatar session:", error);
       setDebug("Error starting session: " + (error as Error).message);
@@ -168,6 +173,18 @@ export default function InteractiveAvatar() {
     await avatar.current?.stopAvatar();
     setStream(undefined);
   }
+
+  const handleChangeChatMode = useMemoizedFn(async (v) => {
+    if (v === chatMode) {
+      return;
+    }
+    if (v === "text_mode") {
+      avatar.current?.closeVoiceChat();
+    } else {
+      await avatar.current?.startVoiceChat();
+    }
+    setChatMode(v);
+  });
 
   const previousText = usePrevious(text);
   useEffect(() => {
@@ -246,7 +263,7 @@ export default function InteractiveAvatar() {
 
   async function fetchRelevantCaseStudies() {
     try {
-      const response = await fetch(`/api/case-studies?industry=${encodeURIComponent(prospectInfo?.companyDetails.industry || '')}`);
+      const response = await fetch(`/api/case-studies?industry=${encodeURIComponent(prospectInfo?.industry || '')}`);
       const data = await response.json();
       setCaseStudies(data);
       return data[0]; // Get most relevant case study
@@ -259,7 +276,10 @@ export default function InteractiveAvatar() {
   async function handlePhaseChange(newPhase: MeetingPhase) {
     if (!avatar.current) return;
 
-    setSalesContext(prev => ({ ...prev, currentPhase: newPhase }));
+    setSalesContext(prev => ({ 
+      ...prev, 
+      currentPhase: newPhase as "briefing" | "meeting" | "summary" 
+    }));
     
     let message = '';
     switch (newPhase) {

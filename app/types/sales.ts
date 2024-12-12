@@ -5,6 +5,7 @@ export interface ProspectInfo {
   position: string;
   painPoints: string[];
   previousInteractions: string[];
+  industry: string;
 }
 
 export interface MeetingSummary {

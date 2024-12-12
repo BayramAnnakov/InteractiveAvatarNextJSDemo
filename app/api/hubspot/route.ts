@@ -157,7 +157,8 @@ async function fetchContactInfo(email: string) {
         industry: companyData?.properties?.industry || fallbackCompany.industry,
         size: companyData?.properties?.numberofemployees || fallbackCompany.size,
         revenue: formatRevenue(companyData?.properties?.annualrevenue || fallbackCompany.revenue)
-      }
+      },
+      industry: companyData?.properties?.industry || fallbackCompany.industry
     };
   } catch (error) {
     console.error('Error fetching HubSpot data:', error);

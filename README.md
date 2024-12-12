@@ -21,7 +21,6 @@ This demo implements an AI Sales Associate powered by HeyGen's Interactive Avata
 
 3. **Post-Meeting Follow-up**: Automatically:
    - Logs meeting summaries back to the CRM
-   - Updates contact and company records
    - Identifies next steps and action items
 
 ## Setup
